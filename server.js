@@ -27,13 +27,18 @@ app.get('/', (req, res) => {
 
 // Main POST endpoint to handle incoming Telegram webhook updates
 app.post('/', async (req, res) => {
-  console.log('RECEIVED A REQUEST FROM SOMEWHERE!'); 
+  // --- IMPORTANT: Send 200 OK immediately to Telegram ---
+  res.sendStatus(200); // Acknowledge receipt to Telegram ASAP to prevent retries!
+  // --- END IMPORTANT CHANGE ---
+
+  console.log('RECEIVED A REQUEST FROM SOMEWHERE!');
   console.log('--- Incoming Telegram Update ---');
   console.log('Request Body:', JSON.stringify(req.body, null, 2));
 
+  // The rest of the logic can run asynchronously after acknowledging Telegram
   if (!req.body || !req.body.message || !req.body.message.text) {
     console.log('No text message found in the update. Ignoring.');
-    return res.sendStatus(200);
+    return; // Already sent 200, just exit
   }
 
   try {
@@ -77,7 +82,7 @@ app.post('/', async (req, res) => {
       });
     }
 
-    res.sendStatus(200);
+    // Removed res.sendStatus(200) from here as it's sent at the top
   } catch (error) {
     console.error('--- Error in app.post handler ---');
     console.error('Error details:', error);
@@ -93,7 +98,8 @@ app.post('/', async (req, res) => {
         console.error('Failed to send error message to Telegram:', telegramError);
       }
     }
-    res.sendStatus(500);
+    // Removed res.sendStatus(500) from here as 200 was already sent at the top.
+    // Telegram only cares about the first status code received.
   }
 });
 
